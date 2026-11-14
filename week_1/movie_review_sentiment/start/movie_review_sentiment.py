@@ -1,22 +1,28 @@
-from openai import OpenAI
+import os
+from dotenv import load_dotenv
 
+import openai
+import json
+
+load_dotenv()
+openai.api_key = os.getenv("OPENAI_API_KEY")
 # Initialize OpenAI client
-client = OpenAI()
+client = openai.OpenAI()
 
 def analyze_sentiment(review):
     """
     Analyze the sentiment of a movie review using structured output.
     Returns a dictionary with 'thought' and 'sentiment' keys.
     """
-    # TODO: Create a prompt that:
-    # 1. Asks for sentiment analysis
-    # 2. Specifies the required output format
-    #       thought: [analysis]
-    #       sentiment: [positive/negative]
-    # 3. Includes the review text
     prompt = """
-    # TODO: Add your prompt here
+    You are an expert linguistic analyst used to evaluate text sentiment. 
+    Analyze the sentiment of the following movie review {review} and provide your analysis in a structured format.
+    the Output should be in a json format, removing the spaces before the keys, between the keys and values, and after the values. The format should be compatible with python's json parser. 
+    remove the json from the output, and only return the json object. The json should have the following keys:
+    thought: [Your analysis of the review]
+    sentiment: [positive/negative]
     """
+    prompt = prompt.format(review=review)
 
     response = client.chat.completions.create(
         model="gpt-4o-mini-2024-07-18",
@@ -25,13 +31,10 @@ def analyze_sentiment(review):
     )
 
     content = response.choices[0].message.content
-    # TODO: Parse the response to extract thought and sentiment
-    # The response should be in the format:
-    # thought: [analysis]
-    # sentiment: [positive/negative]
+    content = json.loads(content)  # Parse the JSON response
     result = {
-        "thought": "",  # TODO: Extract thought
-        "sentiment": ""  # TODO: Extract sentiment
+        "thought": content["thought"],  
+        "sentiment": content["sentiment"] 
     }
     
     return result
@@ -46,6 +49,7 @@ def main():
 
     # Test each review
     for i, review in enumerate(reviews, 1):
+        print(f"\nAnalyzing Review {i}: {review}")
         result = analyze_sentiment(review)
         print(f"\nReview {i}:")
         print(f"Thought: {result['thought']}")
